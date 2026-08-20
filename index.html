@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>A2-C1 Vocab Master 1,000 Words</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 15px; overflow-x: hidden; }
+    
+    .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: #1e293b; border-right: 1px solid #334155; z-index: 1000; transition: left 0.3s ease; display: flex; flex-direction: column; box-shadow: 5px 0 25px rgba(0,0,0,0.5); }
+    .sidebar.open { left: 0; }
+    .sidebar-header { padding: 20px; background: #0f172a; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-header h3 { color: #38bdf8; font-size: 18px; }
+    .close-btn { background: none; border: none; color: #94a3b8; font-size: 24px; cursor: pointer; }
+    .round-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .round-item { padding: 12px 16px; background: #334155; border-radius: 10px; color: #f8fafc; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+    .round-item:hover, .round-item.active { background: #2563eb; }
+    
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; display: none; backdrop-filter: blur(2px); }
+    .overlay.show { display: block; }
+    
+    .app-card { background: #1e293b; width: 100%; max-width: 480px; border-radius: 20px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid #334155; display: flex; flex-direction: column; gap: 16px; position: relative; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #94a3b8; }
+    .menu-btn { background: #334155; border: none; color: white; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 18px; }
+    .round-badge { background: #3b82f6; color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 12px; }
+    
+    .word-container { text-align: center; padding: 10px 0; }
+    .target-word { font-size: 32px; font-weight: 800; color: #f1f5f9; letter-spacing: 0.5px; }
+    .level-badge { display: inline-block; background: #0284c7; color: #ffffff; font-size: 12px; font-weight: bold; padding: 2px 8px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
+    
+    .options-grid { display: flex; flex-direction: column; gap: 12px; }
+    .option-btn { background: #334155; color: #f8fafc; border: 2px solid transparent; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 600; text-align: left; cursor: pointer; transition: all 0.2s ease; width: 100%; line-height: 1.3; }
+    .option-btn:active { transform: scale(0.98); }
+    .option-btn.correct { background: #15803d !important; border-color: #22c55e !important; color: #ffffff !important; }
+    .option-btn.wrong { background: #b91c1c !important; border-color: #ef4444 !important; color: #ffffff !important; }
+    .option-btn.disabled { pointer-events: none; opacity: 0.6; }
+    .option-btn.correct.disabled { opacity: 1; }
+    
+    .details-box { background: #0f172a; border-radius: 16px; padding: 18px; border: 1px solid #334155; display: none; flex-direction: column; gap: 10px; animation: fadeIn 0.3s ease; }
+    .details-box.show { display: flex; }
+    .highlight-meaning-box { background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38bdf8; padding: 10px 14px; border-radius: 8px; margin-bottom: 4px; }
+    .highlight-meaning-title { font-size: 12px; color: #38bdf8; text-transform: uppercase; font-weight: bold; }
+    .highlight-meaning-text { font-size: 22px; font-weight: 800; color: #4ade80; margin-top: 2px; line-height: 1.3; }
+    .detail-row { font-size: 15px; line-height: 1.5; color: #cbd5e1; }
+    .detail-title { color: #94a3b8; font-weight: 600; margin-right: 6px; }
+    
+    .next-btn { background: #2563eb; color: white; border: none; padding: 16px; border-radius: 14px; font-size: 18px; font-weight: bold; cursor: pointer; display: none; text-align: center; margin-top: 8px; }
+    .next-btn.show { display: block; }
+    
+    .summary-box { display: none; flex-direction: column; align-items: center; text-align: center; gap: 15px; padding: 20px 0; }
+    .summary-box.show { display: flex; }
+    .summary-title { font-size: 24px; font-weight: bold; color: #38bdf8; }
+    .summary-score { font-size: 48px; font-weight: 800; color: #22c55e; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h3>เลือกรอบการเล่น (1-50)</h3>
+    <button class="close-btn" onclick="toggleMenu()">✕</button>
+  </div>
+  <div class="round-list" id="round-list"></div>
+</div>
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<div class="app-card">
+  <div class="top-bar">
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    <span class="round-badge" id="round-badge">รอบที่ 1</span>
+    <span>ข้อที่: <strong id="progress-val" style="color:#38bdf8">1/20</strong></span>
+    <span>คะแนน: <strong id="score-val" style="color:#22c55e">0</strong></span>
+  </div>
+
+  <div id="quiz-view" style="display: flex; flex-direction: column; gap: 16px;">
+    <div class="word-container">
+      <span class="target-word" id="target-word">Loading...</span>
+      <span class="level-badge" id="level-badge">A2</span>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <div class="details-box" id="details-box">
+      <div class="highlight-meaning-box">
+        <div class="highlight-meaning-title">💡 คำแปลภาษาไทย</div>
+        <div class="highlight-meaning-text" id="info-meaning">-</div>
+      </div>
+      <div class="detail-row"><span class="detail-title">Part of Speech:</span> <strong id="info-pos" style="color:#f1f5f9">-</strong></div>
+      <div class="detail-row"><span class="detail-title">คำเหมือน (Synonym):</span> <span id="info-synonym" style="color:#38bdf8; font-weight:600;">-</span></div>
+    </div>
+
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">ข้อถัดไป ➡️</button>
+  </div>
+
+  <div class="summary-box" id="summary-view">
+    <div class="summary-title">🎉 จบรอบการเล่น!</div>
+    <p>คะแนนที่คุณทำได้ในรอบนี้</p>
+    <div class="summary-score" id="final-score">0 / 20</div>
+    <button class="next-btn show" style="width:100%" onclick="playNextRound()">เล่นรอบถัดไป ➡️</button>
+    <button class="option-btn" style="text-align:center; margin-top:10px" onclick="replayCurrentRound()">🔄 เล่นรอบนี้ใหม่อีกครั้ง</button>
+  </div>
+</div>
+
+<script>
+  const dict = {
+    "Negotiate": ["เจรจาต่อรอง", "bargain, discuss"], "Recommend": ["แนะนำ", "suggest, advise"],
+    "Ancient": ["โบราณ / เก่าแก่", "old, antique"], "Substantial": ["มากมาย / มีสาระสำคัญ", "considerable, significant"],
+    "Prevent": ["ป้องกัน / ขัดขวาง", "stop, hinder"], "Crowd": ["ฝูงชน", "gathering, group"],
+    "Vulnerable": ["เปราะบาง / อ่อนแอ", "susceptible, helpless"], "Efficient": ["มีประสิทธิภาพ", "effective, productive"],
+    "Notice": ["สังเกตเห็น / ประกาศ", "observe, spot"], "Reluctant": ["ไม่เต็มใจ / ลังเล", "unwilling, hesitant"],
+    "Predict": ["ทำนาย / คาดการณ์", "forecast, foresee"], "Guest": ["แขก / ผู้มาเยือน", "visitor, client"],
+    "Implement": ["นำไปปฏิบัติ", "execute, apply"], "Comprehensive": ["ครอบคลุม / สมบูรณ์", "thorough, complete"],
+    "Decide": ["ตัดสินใจ", "determine, choose"], "Inevitable": ["หลีกเลี่ยงไม่ได้", "unavoidable, certain"],
+    "Compare": ["เปรียบเทียบ", "contrast, match"], "Customer": ["ลูกค้า", "client, buyer"],
+    "Enhance": ["ปรับปรุง / เพิ่มพูน", "improve, boost"], "Ambiguous": ["กำกวม / ไม่ชัดเจน", "unclear, vague"],
+    "Suggest": ["แนะนำ / เสนอแนะ", "propose, recommend"], "Village": ["หมู่บ้าน", "community, hamlet"],
+    "Consistently": ["อย่างสม่ำเสมอ", "regularly, constantly"], "Sophisticated": ["ซับซ้อน / เชี่ยวชาญ", "advanced, refined"],
+    "Describe": ["อธิบาย / บรรยาย", "explain, depict"], "Adequate": ["เพียงพอ / เหมาะสม", "sufficient, enough"],
+    "Profound": ["ลึกซึ้ง / รุนแรง", "deep, intense"], "Imagine": ["จินตนาการ", "picture, envision"],
+    "Establish": ["จัดตั้ง / ก่อตั้ง", "set up, create"], "Rigid": ["เข้มงวด / แข็งกระด้าง", "strict, inflexible"],
+    "Distance": ["ระยะทาง", "gap, space"], "Transform": ["แปลงสภาพ / เปลี่ยนแปลง", "change, convert"],
+    "Speculate": ["คาดเดา / เก็งกำไร", "guess, conjecture"], "Simple": ["ง่าย / ไม่ซับซ้อน", "easy, basic"],
+    "Maintain": ["รักษาไว้ / ดูแล", "preserve, keep"], "Scarcity": ["ความขาดแคลน", "shortage, lack"],
+    "Prepare": ["จัดเตรียม", "ready, arrange"], "Require": ["ต้องการ / บังคับใช้", "need, demand"],
+    "Contradict": ["ขัดแย้ง", "deny, oppose"], "Memory": ["ความทรงจำ", "recollection, recall"],
+    "Evaluate": ["ประเมินผล", "assess, judge"], "Resilient": ["ยืดหยุ่น / ฟื้นตัวไว", "adaptable, tough"],
+    "Message": ["ข้อความ", "note, communication"], "Encourage": ["ให้กำลังใจ / สนับสนุน", "support, inspire"],
+    "Subtle": ["แยบยล / บางเบา", "delicate, understated"], "Neighbor": ["เพื่อนบ้าน", "local, resident"],
+    "Achieve": ["บรรลุผลสำเร็จ", "accomplish, attain"], "Discrepancy": ["ความไม่สอดคล้องกัน", "difference, inconsistency"],
+    "Travel": ["ท่องเที่ยว / เดินทาง", "journey, trip"], "Significant": ["สำคัญ / มีความหมาย", "important, meaningful"],
+    "Feasible": ["เป็นไปได้ / ทำได้จริง", "possible, practical"], "Bottle": ["ขวด", "container, flask"],
+    "Include": ["ครอบคลุม / รวมอยู่", "contain, involve"], "Coincide": ["เกิดขึ้นพร้อมกัน", "concur, overlap"],
+    "Market": ["ตลาด", "bazaar, store"], "Solution": ["วิธีแก้ปัญหา", "answer, resolution"],
+    "Unprecedented": ["ไม่เคยมีมาก่อน", "unmatched, unique"], "Island": ["เกาะ", "isle"],
+    "Identify": ["ระบุ / ชี้ตัว", "recognize, pinpoint"], "Deteriorate": ["ทรุดโทรมลง / เลวร้ายลง", "worsen, decline"],
+    "Ticket": ["บัตร / ตั๋ว", "pass, voucher"], "Atmosphere": ["บรรยากาศ", "environment, climate"],
+    "Arbitrary": ["ตามใจชอบ / สุ่มเอา", "random, chance"], "Heavy": ["หนัก / รุนแรง", "weighty, severe"],
+    "Reduce": ["ลดลง", "decrease, lessen"], "Elaborate": ["ละเอียดยิบ / ซับซ้อน", "detailed, intricate"],
+    "Plant": ["พืช / โรงงาน", "vegetation, factory"], "Provide": ["จัดหาให้ / ให้", "supply, furnish"],
+    "Reconcile": ["ไกล่เกลี่ย / ปรับเข้าใจ", "settle, resolve"], "Danger": ["อันตราย", "hazard, risk"],
+    "Opportunity": ["โอกาส", "chance, opening"], "Plausible": ["สมเหตุสมผล / น่าเชื่อ", "believable, credible"],
+    "Answer": ["คำตอบ", "reply, response"], "Develop": ["พัฒนา", "grow, expand"],
+    "Endure": ["อดทน / คงอยู่", "bear, tolerate"], "Weather": ["สภาพอากาศ", "climate"],
+    "Express": ["แสดงออก", "state, convey"], "Paradox": ["เรื่องย้อนแย้ง", "contradiction, puzzle"],
+    "Corner": ["มุม", "angle, bend"], "Increase": ["เพิ่มขึ้น", "raise, grow"],
+    "Meticulous": ["พิถีพิถันละเอียด", "thorough, precise"], "Office": ["สำนักงาน", "workplace, bureau"],
+    "Support": ["สนับสนุน / ค้ำจุน", "help, assist"], "Alleviate": ["บรรเทา / ทำให้เบาบาง", "relieve, ease"],
+    "Circle": ["วงกลม", "ring, loop"], "Expect": ["คาดหวัง", "anticipate, await"],
+    "Scrutinize": ["ตรวจสอบอย่างละเอียด", "inspect, examine"], "Mirror": ["กระจกเงา", "reflector, glass"],
+    "Protect": ["ปกป้อง / คุ้มครอง", "guard, defend"], "Intricate": ["ซับซ้อนประณีต", "complex, detailed"],
+    "Pocket": ["กระเป๋าเสื้อ/กางเกง", "pouch, bag"], "Avoid": ["หลีกเลี่ยง", "elude, evade"],
+    "Disparate": ["แตกต่างกันอย่างสิ้นเชิง", "different, diverse"], "Winter": ["ฤดูหนาว", "cold season"],
+    "Improve": ["ปรับปรุงให้ดีขึ้น", "better, enhance"], "Foster": ["ส่งเสริม / อุปถัมภ์", "encourage, nurture"],
+    "Screen": ["หน้าจอ / ฉากกั้น", "display, monitor"], "Consider": ["พิจารณา", "think about, ponder"],
+    "Advocate": ["สนับสนุน / ผู้สนับสนุน", "champion, support"], "Bridge": ["สะพาน", "connection, link"],
+    "Prevalent": ["แพร่หลายทั่วไป", "widespread, common"], "Receive": ["ได้รับ", "get, accept"],
+    "Generate": ["สร้าง / ผลิต", "produce, create"], "Explicit": ["ชัดเจน / เปิดเผย", "clear, direct"],
+    "Choose": ["เลือก", "select, pick"], "Explain": ["อธิบาย", "clarify, describe"],
+    "Disseminate": ["เผยแพร่ข้อมูล", "spread, distribute"], "Manage": ["จัดการ / ควบคุม", "handle, control"],
+    "Careful": ["ระมัดระวัง", "cautious, attentive"], "Exacerbate": ["ทำให้ซ้ำร้าย/แย่ลง", "worsen, aggravate"],
+    "Agree": ["เห็นด้วย", "concur, consent"], "Perform": ["แสดง / ปฏิบัติหน้าที่", "execute, do"],
+    "Integral": ["สำคัญขาดไม่ได้", "essential, vital"], "Secret": ["ความลับ", "mystery, private"],
+    "Benefit": ["ประโยชน์", "advantage, profit"], "Coherent": ["สอดคล้องเป็นเหตุเป็นผล", "logical, consistent"],
+    "Access": ["การเข้าถึง", "entry, admission"], "Discretion": ["การดุลยพินิจ", "judgment, choice"],
+    "Family": ["ครอบครัว", "relatives, household"], "Facilitate": ["อำนวยความสะดวก", "ease, assist"],
+    "Forget": ["หลงลืม", "overlook, neglect"], "Challenge": ["ความท้าทาย", "test, obstacle"],
+    "Spontaneous": ["เกิดขึ้นเอง / ฉับพลัน", "unplanned, natural"], "Flight": ["เที่ยวบิน / การบิน", "trip, aviation"],
+    "Discuss": ["พูดคุยอภิปราย", "debate, talk about"], "Imperative": ["จำเป็นเร่งด่วน", "urgent, vital"],
+    "Letter": ["จดหมาย / ตัวอักษร", "note, mail"], "Adapt": ["ปรับตัว", "adjust, modify"],
+    "Concise": ["กระชับรัดกุม", "brief, short"], "Modern": ["ทันสมัย", "contemporary, current"],
+    "Extravagant": ["ฟุ่มเฟือย", "wasteful, lavish"], "Clean": ["สะอาด / ทำความสะอาด", "spotless, wash"],
+    "Replace": ["ทดแทน", "substitute, exchange"], "Volatile": ["ผันผวนง่าย", "unstable, fickle"],
+    "Window": ["หน้าต่าง", "pane, opening"], "Attend": ["เข้าร่วม", "join, present"],
+    "Forest": ["ป่าไม้", "woods, jungle"], "Believe": ["เชื่อถือ", "trust, accept"],
+    "Ambiguity": ["ความคลุมเครือ", "vagueness, uncertainty"], "Strategy": ["กลยุทธ์", "plan, scheme"],
+    "Ubiquitous": ["มีอยู่ทุกหนทุกแห่ง", "omnipresent, pervasive"], "Repeat": ["ทำซ้ำ", "reiterate, redo"],
+    "Impact": ["ผลกระทบ", "effect, influence"], "Pragmatic": ["เน้นการปฏิบัติจริง", "practical, realistic"],
+    "Ground": ["พื้นดิน", "soil, earth"], "Assume": ["สันนิษฐาน / สมมติ", "presume, suppose"],
+    "Ephemeral": ["คงอยู่เพียงชั่วครู่", "transient, short-lived"], "Laugh": ["หัวเราะ", "giggle, chuckle"],
+    "Individual": ["บุคคล / แต่ละคน", "person, single"], "Transient": ["ชั่วคราว", "temporary, fleeting"],
+    "Noise": ["เสียงดัง", "sound, din"], "Create": ["สร้างสรรค์", "make, produce"],
+    "Relinquish": ["สละสิทธิ์ / ละทิ้ง", "surrender, yield"], "System": ["ระบบ", "structure, network"],
+    "Price": ["ราคา", "cost, value"], "Superfluous": ["เกินความจำเป็น", "excessive, extra"],
+    "Promote": ["ส่งเสริม / เลื่อนตำแหน่ง", "advocate, boost"], "Inherent": ["ที่มีอยู่ตามธรรมชาติ", "intrinsic, natural"],
+    "River": ["แม่น้ำ", "stream, waterway"], "Affect": ["ส่งผลกระทบ", "impact, influence"],
+    "Formidable": ["น่าเกรงขาม", "daunting, impressive"], "Smile": ["รอยยิ้ม", "grin"],
+    "Quality": ["คุณภาพ", "standard, merit"], "Complacent": ["พึงพอใจจนประมาท", "self-satisfied, smug"],
+    "Bread": ["ขนมปัง", "food, loaf"], "Source": ["แหล่งที่มา", "origin, root"],
+    "Opaque": ["ทึบแสง / เข้าใจยาก", "non-transparent, obscure"], "Cloud": ["ก้อนเมฆ", "mist, fog"],
+    "Continue": ["ดำเนินต่อไป", "proceed, persist"], "Profoundly": ["อย่างลึกซึ้ง", "deeply, greatly"],
+    "Method": ["วิธีการ", "technique, system"], "Quiet": ["เงียบสงบ", "silent, peaceful"],
+    "Disparity": ["ความแตกต่างเหลื่อมล้ำ", "inequality, gap"], "Follow": ["ติดตาม", "succeed, pursue"],
+    "Option": ["ทางเลือก", "choice, alternative"], "Tenacious": ["ทรหด / ไม่ยอมแพ้", "stubborn, persistent"],
+    "Floor": ["พื้นห้อง / ชั้น", "ground, level"], "Value": ["คุณค่า / มูลค่า", "worth, importance"],
+    "Mitigate": ["บรรเทาความเสียหาย", "alleviate, reduce"], "Result": ["ผลลัพธ์", "outcome, consequence"],
+    "Disdain": ["การดูถูกเหยียดหยาม", "scorn, contempt"], "Phone": ["โทรศัพท์", "telephone, mobile"],
+    "Detail": ["รายละเอียด", "element, particular"], "Stringent": ["เข้มงวดกวดขัน", "strict, rigorous"],
+    "Paper": ["กระดาษ", "sheet, document"], "Allow": ["อนุญาต", "permit, let"],
+    "Intrinsic": ["โดยแท้จริง", "inherent, natural"], "Future": ["อนาคต", "tomorrow, time ahead"],
+    "Demand": ["ความต้องการ", "request, order"], "Pernicious": ["เป็นอันตรายร้ายแรง", "harmful, destructive"],
+    "Clock": ["นาฬิกา", "timepiece, watch"], "Control": ["ควบคุม", "command, direct"],
+    "Ubiquity": ["การมีอยู่ทุกหนแห่ง", "omnipresence"], "Table": ["โต๊ะ / ตาราง", "desk, chart"],
+    "Supply": ["จัดหาให้ / เสบียง", "provide, stock"], "Tacit": ["เป็นที่รู้กันโดยไม่พูด", "implicit, silent"],
+    "Radio": ["วิทยุ", "broadcast, receiver"], "Emulate": ["เลียนแบบ", "imitate, copy"],
+    "Factor": ["ปัจจัย", "element, component"], "Camera": ["กล้องถ่ายรูป", "device, lens"],
+    "Solitary": ["สันโดษ / โดดเดี่ยว", "lonely, isolated"], "Order": ["คำสั่ง / สั่งซื้อ", "command, request"],
+    "Influence": ["อิทธิพล", "sway, effect"], "Equivocal": ["ไม่ชัดเจน", "ambiguous, doubtful"],
+    "Doctor": ["แพทย์ / หมอ", "physician, clinician"], "Effect": ["ผลลัพธ์", "result, outcome"],
+    "Fastidious": ["จู้จี้ / พิถีพิถัน", "fussy, meticulous"], "Apple": ["แอปเปิล", "fruit"],
+    "Process": ["กระบวนการ", "procedure, system"], "Diligent": ["ขยันหมั่นเพียร", "hard-working, industrious"],
+    "Train": ["รถไฟ / ฝึกฝน", "locomotive, coach"], "Issue": ["ประเด็น / ปัญหา", "topic, problem"],
+    "Pervasive": ["แพร่กระจายไปทั่ว", "widespread, ubiquitous"], "Obscure": ["คลุมเครือ / ปิดบัง", "unclear, hidden"],
+    "Expand": ["ขยายตัว", "grow, enlarge"], "Treacherous": ["อันตรายหลอกตา", "perfidious, dangerous"],
+    "Group": ["กลุ่ม", "team, cluster"], "Focus": ["จดจ่อ", "concentrate, center"],
+    "Exemplary": ["เป็นแบบอย่างที่ดี", "model, ideal"], "Early": ["ก่อนเวลา", "ahead of time, prompt"],
+    "Trend": ["แนวโน้ม", "tendency, drift"], "Juxtapose": ["วางเปรียบเทียบเคียงกัน", "compare, contrast"],
+    "Change": ["เปลี่ยนแปลง", "alter, modify"], "Resource": ["ทรัพยากร", "asset, supply"],
+    "Gregarious": ["เข้าสังคมเก่ง", "sociable, outgoing"], "Lesson": ["บทเรียน", "class, instruction"],
+    "Function": ["หน้าที่", "role, operation"], "Unobtrusive": ["ไม่สะดุดตา", "inconspicuous, modest"],
+    "Policy": ["นโยบาย", "strategy, plan"], "Ostentatious": ["โอ้อวด", "showy, flashy"],
+    "Measure": ["วัดขนาด / มาตรการ", "calculate, gauge"], "Prolific": ["ผลงานเยอะ", "productive, fertile"],
+    "Shirt": ["เสื้อเชิ้ต", "top, garment"], "Risk": ["ความเสี่ยง", "hazard, peril"],
+    "Dogmatic": ["ดันทุรัง", "opinionated, rigid"], "Field": ["สาขาวิชา", "area, domain"],
+    "Structure": ["โครงสร้าง", "format, framework"], "Supercilious": ["ดูถูกคนอื่น", "arrogant, haughty"],
+    "Grass": ["หญ้า", "lawn, turf"], "Standard": ["มาตรฐาน", "criterion, norm"],
+    "Empirical": ["จากการทดลองจริง", "experimental, factual"], "Store": ["ร้านค้า", "shop, keep"],
+    "Complex": ["ซับซ้อน", "complicated, intricate"], "Irrevocable": ["ยกเลิกไม่ได้", "unalterable, final"],
+    "Light": ["แสงสว่าง / เบา", "bright, lightweight"], "Feature": ["คุณสมบัติ", "characteristic, trait"],
+    "Sabbatical": ["การลาพักงาน", "leave, break"], "Animal": ["สัตว์", "beast, creature"],
+    "Region": ["ภูมิภาค", "area, zone"], "Insidious": ["ร้ายกาจแบบซ่อนเร้น", "subtle, harmful"],
+    "Month": ["เดือน", "period"], "Section": ["ส่วน / แผนก", "part, division"],
+    "Unanimity": ["ความเป็นเอกฉันท์", "agreement, consensus"], "Voice": ["เสียงพูด", "vocal, tone"],
+    "Design": ["ออกแบบ", "plan, draft"], "Flamboyant": ["หรูหราฉูดฉาด", "showy, ostentatious"],
+    "Water": ["น้ำ", "liquid, H2O"], "Range": ["ขอบเขต", "scope, extent"],
+    "Candor": ["ความตรงไปตรงมา", "frankness, honesty"], "World": ["โลก", "earth, globe"],
+    "Project": ["โครงการ", "plan, scheme"], "Disparage": ["พูดด้อยค่า", "belittle, deprecate"],
+    "Night": ["กลางคืน", "evening, dark"], "Purpose": ["วัตถุประสงค์", "goal, aim"],
+    "Capricious": ["ปรวนแปร", "unpredictable, fickle"], "Class": ["ชั้นเรียน", "course, category"],
+    "Context": ["บริบท", "background, setting"], "Extraneous": ["ไม่เกี่ยวข้อง", "irrelevant, unrelated"],
+    "Aspect": ["แง่มุม", "side, feature"], "Dream": ["ความฝัน", "fantasy, vision"],
+    "Growth": ["การเจริญเติบโต", "development, expansion"], "Synchronize": ["เกิดขึ้นพร้อมกัน", "integrate, match"],
+    "Party": ["งานเลี้ยง / ฝ่าย", "gathering, faction"], "Level": ["ระดับ", "grade, tier"],
+    "Dichotomy": ["การแบ่งเป็นสองฝ่าย", "division, contrast"], "Dress": ["ชุดเดรส", "garment, clothe"],
+    "Approach": ["วิธีการ", "method, near"], "Reticent": ["เงียบขรึม", "reserved, quiet"],
+    "Earth": ["โลก / พื้นดิน", "planet, soil"], "Magnanimous": ["ใจกว้าง", "generous, forgiving"],
+    "Space": ["พื้นที่ / อวกาศ", "room, void"], "Income": ["รายได้", "salary, earnings"],
+    "Inadvertent": ["ไม่ได้ตั้งใจ", "unintentional, accidental"], "Sound": ["เสียง", "noise, audio"],
+    "Authority": ["ผู้มีอำนาจ", "power, expert"], "Surreptitious": ["แอบทำ / ลักลอบ", "secret, stealthy"],
+    "Music": ["ดนตรี", "song, melody"], "Community": ["ชุมชน", "society, group"],
+    "Anachronism": ["สิ่งผิดยุคสมัย", "mismatch, error"], "House": ["บ้าน", "home, residence"],
+    "Obsequious": ["ประจบประแจง", "servile, flattering"], "Child": ["เด็ก", "kid, infant"],
+    "Lethargic": ["เฉื่อยชา", "sluggish, tired"], "Money": ["เงิน", "cash, currency"],
+    "Physical": ["ทางร่างกาย", "bodily, material"], "Trepidation": ["ความกลัวหวาดหวั่น", "fear, apprehension"],
+    "Heart": ["หัวใจ", "core, organ"], "Analysis": ["การวิเคราะห์", "examination, study"],
+    "Veracity": ["ความจริงแท้", "truthfulness, accuracy"], "Story": ["เรื่องราว", "tale, narrative"],
+    "Major": ["สำคัญ / หลัก", "main, chief"], "Cognizant": ["ตระหนักรู้", "aware, conscious"],
+    "Today": ["วันนี้", "present day"], "Specific": ["เฉพาะเจาะจง", "particular, precise"],
+    "Subversive": ["มุ่งโค่นล้มอำนาจ", "rebellious, disruptive"], "Chair": ["เก้าอี้", "seat"],
+    "Primary": ["ลำดับแรก", "main, chief"], "Esoteric": ["รู้กันเฉพาะกลุ่ม", "obscure, arcane"],
+    "Similar": ["คล้ายคลึงกัน", "alike, comparable"], "Inundate": ["ท่วมท้น", "overwhelm, flood"],
+    "Final": ["สุดท้าย", "last, ultimate"], "Disavow": ["ปฏิเสธความเกี่ยวข้อง", "deny, disown"],
+    "Happy": ["มีความสุข", "joyful, glad"], "Theory": ["ทฤษฎี", "concept, principle"],
+    "Equanimity": ["ความสุขุม", "calmness, composure"], "Small": ["ขนาดเล็ก", "little, tiny"],
+    "Environment": ["สิ่งแวดล้อม", "surroundings, habitat"], "Indefatigable": ["ไม่รู้จักเหน็ดเหนื่อย", "untiring, tireless"],
+    "Large": ["ขนาดใหญ่", "big, huge"], "Element": ["องค์ประกอบ", "component, factor"],
+    "Perfunctory": ["ทำพอเป็นพิธี", "careless, routine"], "White": ["สีขาว", "pale, fair"],
+    "Positive": ["เชิงบวก", "optimistic, sure"], "Excoriate": ["วิพากษ์วิจารณ์อย่างหนัก", "criticize, censure"],
+    "Green": ["สีเขียว", "verdant"], "Culture": ["วัฒนธรรม", "tradition, heritage"],
+    "Precipitate": ["เร่งให้เกิดเร็วขึ้น", "trigger, hasten"], "Young": ["อายุน้อย", "youthful, junior"],
+    "Evidence": ["หลักฐาน", "proof, data"], "Iconoclast": ["ผู้ต่อต้านความเชื่อเดิม", "rebel, radical"],
+    "Black": ["สีดำ", "dark"], "Potential": ["ศักยภาพ", "possible, capability"],
+    "Loquacious": ["ช่างพูดช่างคุย", "talkative, garrulous"], "Sweet": ["หวาน", "sugary, kind"],
+    "Security": ["ความปลอดภัย", "safety, protection"], "Munificent": ["ใจดีเอื้อเฟื้ออย่างมาก", "generous, lavish"],
+    "Short": ["สั้น / เตี้ย", "brief, small"], "Financial": ["ทางการเงิน", "monetary, fiscal"],
+    "Inscrutable": ["ยากจะเข้าใจ", "mysterious, cryptic"], "Strong": ["แข็งแรง", "powerful, sturdy"],
+    "Economic": ["ทางเศรษฐกิจ", "financial, commercial"], "Nefarious": ["ชั่วร้าย", "wicked, evil"],
+    "Woman": ["ผู้หญิง", "female, lady"], "Traditional": ["ตามดั้งเดิม", "conventional, classic"],
+    "Circumspect": ["รอบคอบรอบด้าน", "cautious, prudent"], "Friend": ["เพื่อน", "pal, companion"],
+    "Performance": ["ประสิทธิภาพ", "show, execution"], "Parsimonious": ["ตระหนี่ถี่เหนียว", "stingy, mean"],
+    "Father": ["พ่อ", "parent, dad"], "Knowledge": ["ความรู้", "understanding, wisdom"],
+    "Proclivity": ["แนวโน้มความชอบ", "tendency, inclination"], "Mother": ["แม่", "parent, mom"],
+    "Activity": ["กิจกรรม", "action, task"], "Sanctimonious": ["มือถือสากปากถือศีล", "hypocritical, pious"],
+    "Sister": ["พี่สาว/น้องสาว", "sibling"], "Research": ["การวิจัย", "study, investigation"],
+    "Intransigent": ["ดื้อรั้นไม่ยอมความ", "stubborn, uncompromising"], "Brother": ["พี่ชาย/น้องชาย", "sibling"],
+    "Investment": ["การลงทุน", "stake, asset"], "Cacophony": ["เสียงอึกทึกสับสน", "noise, discord"],
+    "School": ["โรงเรียน", "academy, college"], "Commercial": ["เชิงพาณิชย์", "business, trading"],
+    "Sycophant": ["คนประจบสอพลอ", "flatterer, toad"], "Street": ["ถนน", "road, avenue"],
+    "Attitude": ["ทัศนคติ", "mindset, outlook"], "Vociferous": ["เสียงดังโวยวาย", "loud, vocal"],
+    "Person": ["บุคคล", "individual, human"], "Difficulty": ["ความยากลำบาก", "hardship, problem"],
+    "Quixotic": ["เพ้อฝันไม่อยู่บนจริง", "idealistic, impractical"], "Society": ["สังคม", "community, public"],
+    "Soporific": ["ที่ทำให้ง่วงนอน", "sleep-inducing, dull"], "Center": ["ศูนย์กลาง", "middle, core"],
+    "Technology": ["เทคโนโลยี", "science, equipment"], "Insipid": ["จืดชืด / น่าเบื่อ", "tasteless, bland"],
+    "Minute": ["นาที", "moment"], "Executive": ["ผู้บริหาร", "manager, director"],
+    "Enervate": ["ทำให้หมดแรง", "weaken, exhaust"], "Second": ["วินาที / ที่สอง", "instant, next"],
+    "Recalcitrant": ["ดื้อดึงไม่เคารพกฎ", "disobedient, rebellious"], "Hour": ["ชั่วโมง", "period"],
+    "Professional": ["มืออาชีพ", "expert, skilled"], "Inchoate": ["เพิ่งเริ่มต้น", "unformed, developing"],
+    "Available": ["พร้อมใช้งาน", "accessible, ready"], "Obdurate": ["ดื้อดึงใจแข็ง", "stubborn, obstinate"],
+    "Morning": ["เช้า", "dawn, AM"], "Material": ["วัตถุดิบ", "substance, matter"],
+    "Inimical": ["เป็นโทษ", "harmful, hostile"], "Energy": ["พลังงาน", "power, vigor"],
+    "Garrulous": ["พูดมากซอกแซก", "talkative, loquacious"], "Pencil": ["ดินสอ", "writing tool"],
+    "Disease": ["โรคภัยไข้เจ็บ", "illness, sickness"], "Imperturbable": ["สุขุมเยือกเย็นมาก", "calm, cool"],
+    "Watch": ["รับชม / ดู", "observe, look"], "Population": ["ประชากร", "citizens, inhabitants"],
+    "Exigent": ["เร่งด่วนฉุกเฉิน", "urgent, pressing"], "Learn": ["เรียนรู้", "study, master"],
+    "Management": ["การจัดการ", "administration, control"], "Nonchalant": ["เมินเฉย", "unconcerned, cool"],
+    "Teach": ["สอน", "instruct, educate"], "Behavior": ["พฤติกรรม", "conduct, actions"],
+    "Speak": ["พูด", "talk, converse"], "Write": ["เขียน", "compose, draft"],
+    "Transgress": ["ฝ่าฝืนกฎระเบียบ", "violate, breach"], "Listen": ["ฟัง", "hear, attend"],
+    "Read": ["อ่าน", "study, scan"], "Walk": ["เดิน", "stroll, pace"],
+    "Run": ["วิ่ง", "sprint, jog"], "Stand": ["ยืน", "rise"],
+    "Sit": ["นั่ง", "be seated"], "Move": ["เคลื่อนไหว", "relocate, shift"],
+    "Stop": ["หยุด", "halt, cease"], "Start": ["เริ่มต้น", "begin, commence"],
+    "Open": ["เปิด", "uncover, unlock"], "Close": ["ปิด", "shut, seal"],
+    "Live": ["อาศัยอยู่", "reside, exist"], "Work": ["ทำงาน", "labor, operate"],
+    "Play": ["เล่น", "engage, compete"], "Call": ["เรียก / โทรศัพท์", "phone, summon"],
+    "Help": ["ช่วยเหลือ", "assist, aid"], "Need": ["ต้องการ", "require, want"],
+    "Want": ["อยากได้", "desire, wish"], "Like": ["ชอบ", "enjoy, prefer"],
+    "Love": ["รัก", "adore, cherish"], "Think": ["คิด", "believe, consider"],
+    "Know": ["รู้ / รู้จัก", "understand, comprehend"], "See": ["เห็น", "view, notice"],
+    "Look": ["มองดู", "glance, watch"], "Find": ["ค้นหาเจอ", "discover, locate"],
+    "Give": ["ให้", "provide, grant"], "Take": ["เอาไป / รับ", "grab, receive"],
+    "Come": ["มา", "arrive, approach"], "Go": ["ไป", "depart, leave"],
+    "Make": ["ทำ / สร้าง", "create, produce"], "Keep": ["เก็บรักษา", "hold, retain"],
+    "Hold": ["ถือ / จัดงาน", "grip, contain"], "Turn": ["หมุน / เลี้ยว", "rotate, switch"],
+    "Show": ["แสดงให้เห็น", "display, reveal"], "Feel": ["รู้สึก", "sensation, sense"],
+    "Try": ["พยายาม", "attempt, strive"], "Ask": ["ถาม / ขอร้อง", "inquire, request"],
+    "Leave": ["ออกจาก", "exit, abandon"], "Put": ["วางลง", "place, set"],
+    "Mean": ["หมายความว่า", "signify, indicate"], "Let": ["ยินยอมให้", "allow, permit"],
+    "Begin": ["เริ่ม", "start, commence"], "Seem": ["ดูเหมือนว่า", "appear, look"],
+    "Talk": ["พูดคุย", "speak, chat"], "Hear": ["ได้ยิน", "listen"],
+    "Bring": ["นำมา", "fetch, carry"], "Happen": ["เกิดขึ้น", "occur, take place"],
+    "Lose": ["ทำหาย", "misplace, forfeit"], "Pay": ["จ่ายเงิน", "remit, settle"],
+    "Meet": ["พบปะ", "encounter, greet"], "Set": ["จัดวาง", "put, establish"],
+    "Lead": ["นำทาง", "guide, direct"], "Understand": ["เข้าใจ", "comprehend, grasp"],
+    "Add": ["เพิ่มเข้าไป", "include, attach"], "Spend": ["ใช้จ่าย", "expend, pass"],
+    "Grow": ["เติบโต", "expand, increase"], "Win": ["ชนะ", "triumph, succeed"],
+    "Offer": ["เสนอให้", "propose, tender"], "Remember": ["จดจำได้", "recall, recollect"],
+    "Buy": ["ซื้อ", "purchase"], "Wait": ["เฝ้ารอ", "await, stay"],
+    "Serve": ["บริการ", "attend, supply"], "Die": ["เสียชีวิต", "perish, pass away"],
+    "Send": ["จัดส่ง", "mail, dispatch"], "Build": ["ก่อสร้าง", "construct, make"],
+    "Stay": ["พักอาศัย", "remain, reside"], "Fall": ["ตก / ล้ม", "drop, collapse"],
+    "Cut": ["ตัด", "slice, chop"], "Reach": ["เข้าถึง", "attain, touch"],
+    "Kill": ["ฆ่า", "murder, destroy"], "Remain": ["ยังคงอยู่", "stay, endure"],
+    "Raise": ["ยกขึ้น", "lift, rear"], "Pass": ["ผ่านไป", "go by, succeed"],
+    "Sell": ["ขาย", "vendor, trade"], "Report": ["รายงาน", "inform, announce"],
+    "Pull": ["ดึง", "drag, tug"], "Return": ["ย้อนกลับ", "come back, restore"],
+    "Hope": ["คาดหวัง", "wish, desire"], "Carry": ["ถือ / แบก", "transport, bear"],
+    "Drive": ["ขับรถ", "operate, steer"], "Break": ["ทำแตก / พักผ่อน", "fracture, rest"],
+    "Hit": ["ตี / ชน", "strike, knock"], "Produce": ["ผลิต", "make, generate"],
+    "Cover": ["ปกคลุม", "hide, overlay"], "Catch": ["ดักจับ", "capture, grab"],
+    "Draw": ["วาดภาพ / ดึงดูด", "sketch, pull"], "Cause": ["เป็นสาเหตุ", "induce, lead to"],
+    "Point": ["จุด / ชี้", "dot, indicate"], "High": ["สูง", "tall, elevated"],
+    "Low": ["ต่ำ / น้อย", "bottom, short"], "Old": ["เก่า / แก่", "aged, ancient"],
+    "Great": ["ยิ่งใหญ่", "grand, wonderful"], "Big": ["ใหญ่", "huge, large"],
+    "Long": ["ยาวนาน", "extended, lengthy"], "Important": ["สำคัญ", "vital, crucial"],
+    "Few": ["จำนวนน้อย", "some, scarce"], "Bad": ["แย่ / ไม่ดี", "poor, evil"],
+    "Same": ["เหมือนกัน", "identical, equal"], "Able": ["มีความสามารถ", "capable, competent"],
+    "Late": ["สาย / ดึก", "behind time, delayed"], "Hard": ["ยาก / แข็ง", "difficult, solid"],
+    "Better": ["ดีกว่า", "superior"], "Best": ["ดีที่สุด", "finest, top"],
+    "Only": ["เพียงแค่นี้", "solely, just"], "Right": ["ถูกต้อง", "correct, proper"],
+    "National": ["แห่งชาติ", "countrywide"], "Social": ["ทางสังคม", "community, civic"],
+    "Public": ["สาธารณะ", "communal, open"], "Sure": ["แน่ใจ", "certain, confident"],
+    "Clear": ["ชัดเจน", "evident, plain"], "Full": ["เต็มแน่น", "packed, complete"],
+    "Easy": ["ง่ายดาย", "simple, effortless"], "Real": ["แท้จริง", "genuine, actual"],
+    "Close": ["ใกล้ชิด", "near, nearby"], "Free": ["อิสระ / ฟรี", "liberated, complimentary"]
+  };
+
+  const rawList = [
+    ["Negotiate","v.","C1"],["Recommend","v.","B1"],["Ancient","adj.","A2"],["Substantial","adj.","C1"],["Prevent","v.","B1"],
+    ["Crowd","n.","A2"],["Vulnerable","adj.","C1"],["Efficient","adj.","B2"],["Notice","v.","A2"],["Reluctant","adj.","C1"],
+    ["Predict","v.","B1"],["Guest","n.","A2"],["Implement","v.","B2"],["Comprehensive","adj.","C1"],["Decide","v.","A2"],
+    ["Inevitable","adj.","C1"],["Compare","v.","B1"],["Customer","n.","A2"],["Enhance","v.","B2"],["Ambiguous","adj.","C1"],
+    ["Suggest","v.","B1"],["Village","n.","A2"],["Consistently","adv.","B2"],["Sophisticated","adj.","C1"],["Describe","v.","A2"],
+    ["Adequate","adj.","B2"],["Profound","adj.","C1"],["Imagine","v.","A2"],["Establish","v.","B2"],["Rigid","adj.","C1"],
+    ["Distance","n.","A2"],["Transform","v.","B2"],["Speculate","v.","C1"],["Simple","adj.","A2"],["Maintain","v.","B2"],
+    ["Scarcity","n.","C1"],["Prepare","v.","A2"],["Require","v.","B1"],["Contradict","v.","C1"],["Memory","n.","A2"],
+    ["Evaluate","v.","B2"],["Resilient","adj.","C1"],["Message","n.","A2"],["Encourage","v.","B1"],["Subtle","adj.","C1"],
+    ["Neighbor","n.","A2"],["Achieve","v.","B1"],["Discrepancy","n.","C1"],["Travel","v.","A2"],["Significant","adj.","B2"],
+    ["Feasible","adj.","C1"],["Bottle","n.","A2"],["Include","v.","B1"],["Coincide","v.","C1"],["Market","n.","A2"],
+    ["Solution","n.","B1"],["Unprecedented","adj.","C1"],["Island","n.","A2"],["Identify","v.","B1"],["Deteriorate","v.","C1"],
+    ["Ticket","n.","A2"],["Atmosphere","n.","B1"],["Arbitrary","adj.","C1"],["Heavy","adj.","A2"],["Reduce","v.","B1"],
+    ["Elaborate","adj.","C1"],["Plant","n.","A2"],["Provide","v.","B1"],["Reconcile","v.","C1"],["Danger","n.","A2"],
+    ["Opportunity","n.","B1"],["Plausible","adj.","C1"],["Answer","n.","A2"],["Develop","v.","B1"],["Endure","v.","C1"],
+    ["Weather","n.","A2"],["Express","v.","B1"],["Paradox","n.","C1"],["Corner","n.","A2"],["Increase","v.","B1"],
+    ["Meticulous","adj.","C1"],["Office","n.","A2"],["Support","v.","B1"],["Alleviate","v.","C1"],["Circle","n.","A2"],
+    ["Expect","v.","B1"],["Scrutinize","v.","C1"],["Mirror","n.","A2"],["Protect","v.","B1"],["Intricate","adj.","C1"],
+    ["Pocket","n.","A2"],["Avoid","v.","B1"],["Disparate","adj.","C1"],["Winter","n.","A2"],["Improve","v.","B1"],
+    ["Foster","v.","C1"],["Screen","n.","A2"],["Consider","v.","B1"],["Advocate","v.","C1"],["Bridge","n.","A2"],
+    ["Prevalent","adj.","C1"],["Receive","v.","A2"],["Generate","v.","B2"],["Explicit","adj.","C1"],["Choose","v.","A2"],
+    ["Explain","v.","A2"],["Disseminate","v.","C1"],["Manage","v.","B1"],["Careful","adj.","A2"],["Exacerbate","v.","C1"],
+    ["Agree","v.","A2"],["Perform","v.","B1"],["Integral","adj.","C1"],["Secret","n.","A2"],["Benefit","n.","B1"],
+    ["Coherent","adj.","C1"],["Access","n.","B1"],["Discretion","n.","C1"],["Family","n.","A2"],["Facilitate","v.","C1"],
+    ["Forget","v.","A2"],["Challenge","n.","B1"],["Spontaneous","adj.","C1"],["Flight","n.","A2"],["Discuss","v.","B1"],
+    ["Imperative","adj.","C1"],["Letter","n.","A2"],["Adapt","v.","B2"],["Concise","adj.","C1"],["Modern","adj.","A2"],
+    ["Extravagant","adj.","C1"],["Clean","adj.","A2"],["Replace","v.","B1"],["Volatile","adj.","C1"],["Window","n.","A2"],
+    ["Attend","v.","B1"],["Forest","n.","A2"],["Believe","v.","A2"],["Ambiguity","n.","C1"],["Strategy","n.","B2"],
+    ["Ubiquitous","adj.","C1"],["Repeat","v.","A2"],["Impact","n.","B2"],["Pragmatic","adj.","C1"],["Ground","n.","A2"],
+    ["Assume","v.","B2"],["Ephemeral","adj.","C1"],["Laugh","v.","A2"],["Individual","n.","B1"],["Transient","adj.","C1"],
+    ["Noise","n.","A2"],["Create","v.","A2"],["Relinquish","v.","C1"],["System","n.","B1"],["Price","n.","A2"],
+    ["Superfluous","adj.","C1"],["Promote","v.","B2"],["Inherent","adj.","C1"],["River","n.","A2"],["Affect","v.","B1"],
+    ["Formidable","adj.","C1"],["Smile","n.","A2"],["Quality","n.","B1"],["Complacent","adj.","C1"],["Bread","n.","A2"],
+    ["Source","n.","B1"],["Opaque","adj.","C1"],["Cloud","n.","A2"],["Continue","v.","A2"],["Profoundly","adv.","C1"],
+    ["Method","n.","B1"],["Quiet","adj.","A2"],["Disparity","n.","C1"],["Follow","v.","A2"],["Option","n.","B1"],
+    ["Tenacious","adj.","C1"],["Floor","n.","A2"],["Value","n.","B1"],["Mitigate","v.","C1"],["Result","n.","B1"],
+    ["Disdain","n.","C1"],["Phone","n.","A2"],["Detail","n.","B1"],["Stringent","adj.","C1"],["Paper","n.","A2"],
+    ["Allow","v.","B1"],["Intrinsic","adj.","C1"],["Future","n.","A2"],["Demand","n.","B1"],["Pernicious","adj.","C1"],
+    ["Clock","n.","A2"],["Control","v.","B1"],["Ubiquity","n.","C1"],["Table","n.","A2"],["Supply","v.","B1"],
+    ["Tacit","adj.","C1"],["Radio","n.","A2"],["Emulate","v.","C1"],["Factor","n.","B1"],["Camera","n.","A2"],
+    ["Solitary","adj.","C1"],["Order","n.","A2"],["Influence","v.","B2"],["Equivocal","adj.","C1"],["Doctor","n.","A2"],
+    ["Effect","n.","B1"],["Fastidious","adj.","C1"],["Apple","n.","A2"],["Process","n.","B1"],["Diligent","adj.","C1"],
+    ["Train","n.","A2"],["Issue","n.","B1"],["Pervasive","adj.","C1"],["Obscure","adj.","C1"],["Expand","v.","B2"],
+    ["Treacherous","adj.","C1"],["Group","n.","A2"],["Focus","v.","B1"],["Exemplary","adj.","C1"],["Early","adv.","A2"],
+    ["Trend","n.","B1"],["Juxtapose","v.","C1"],["Resource","n.","B1"],["Gregarious","adj.","C1"],["Lesson","n.","A2"],
+    ["Function","n.","B1"],["Unobtrusive","adj.","C1"],["Policy","n.","B1"],["Ostentatious","adj.","C1"],["Measure","v.","B1"],
+    ["Prolific","adj.","C1"],["Shirt","n.","A2"],["Risk","n.","B1"],["Dogmatic","adj.","C1"],["Field","n.","A2"],
+    ["Structure","n.","B2"],["Supercilious","adj.","C1"],["Grass","n.","A2"],["Standard","n.","B2"],["Empirical","adj.","C1"],
+    ["Store","n.","A2"],["Complex","adj.","B1"],["Irrevocable","adj.","C1"],["Light","n.","A2"],["Feature","n.","B1"],
+    ["Sabbatical","n.","C1"],["Animal","n.","A2"],["Region","n.","B1"],["Insidious","adj.","C1"],["Month","n.","A2"],
+    ["Section","n.","B1"],["Unanimity","n.","C1"],["Voice","n.","A2"],["Design","n.","B1"],["Flamboyant","adj.","C1"],
+    ["Water","n.","A2"],["Range","n.","B2"],["Candor","n.","C1"],["World","n.","A2"],["Project","n.","B1"],
+    ["Disparage","v.","C1"],["Purpose","n.","B1"],["Capricious","adj.","C1"],["Class","n.","A2"],["Context","n.","B2"],
+    ["Extraneous","adj.","C1"],["Aspect","n.","B2"],["Dream","n.","A2"],["Growth","n.","B1"],["Synchronize","v.","C1"],
+    ["Party","n.","A2"],["Level","n.","B1"],["Dichotomy","n.","C1"],["Dress","n.","A2"],["Approach","n.","B2"],
+    ["Reticent","adj.","C1"],["Earth","n.","A2"],["Magnanimous","adj.","C1"],["Space","n.","A2"],["Income","n.","B1"],
+    ["Inadvertent","adj.","C1"],["Sound","n.","A2"],["Authority","n.","B2"],["Surreptitious","adj.","C1"],["Music","n.","A2"],
+    ["Community","n.","B1"],["Anachronism","n.","C1"],["House","n.","A2"],["Obsequious","adj.","C1"],["Child","n.","A2"],
+    ["Lethargic","adj.","C1"],["Money","n.","A2"],["Physical","adj.","B1"],["Trepidation","n.","C1"],["Heart","n.","A2"],
+    ["Analysis","n.","B2"],["Veracity","n.","C1"],["Story","n.","A2"],["Major","adj.","B1"],["Cognizant","adj.","C1"],
+    ["Today","adv.","A2"],["Specific","adj.","B1"],["Subversive","adj.","C1"],["Chair","n.","A2"],["Primary","adj.","B1"],
+    ["Esoteric","adj.","C1"],["Similar","adj.","A2"],["Inundate","v.","C1"],["Final","adj.","A2"],["Disavow","v.","C1"],
+    ["Happy","adj.","A2"],["Theory","n.","B2"],["Equanimity","n.","C1"],["Small","adj.","A2"],["Environment","n.","B1"],
+    ["Indefatigable","adj.","C1"],["Large","adj.","A2"],["Element","n.","B1"],["Perfunctory","adj.","C1"],["White","adj.","A2"],
+    ["Positive","adj.","B1"],["Excoriate","v.","C1"],["Green","adj.","A2"],["Culture","n.","B1"],["Precipitate","v.","C1"],
+    ["Young","adj.","A2"],["Evidence","n.","B2"],["Iconoclast","n.","C1"],["Black","adj.","A2"],["Potential","adj.","B2"],
+    ["Loquacious","adj.","C1"],["Sweet","adj.","A2"],["Security","n.","B1"],["Munificent","adj.","C1"],["Short","adj.","A2"],
+    ["Financial","adj.","B1"],["Inscrutable","adj.","C1"],["Strong","adj.","A2"],["Economic","adj.","B1"],["Nefarious","adj.","C1"],
+    ["Woman","n.","A2"],["Traditional","adj.","B1"],["Circumspect","adj.","C1"],["Friend","n.","A2"],["Performance","n.","B1"],
+    ["Parsimonious","adj.","C1"],["Father","n.","A2"],["Knowledge","n.","B1"],["Proclivity","adj.","C1"],["Mother","n.","A2"],
+    ["Activity","n.","A2"],["Sanctimonious","adj.","C1"],["Sister","n.","A2"],["Research","n.","B1"],["Intransigent","adj.","C1"],
+    ["Brother","n.","A2"],["Investment","n.","B2"],["Cacophony","n.","C1"],["School","n.","A2"],["Commercial","adj.","B2"],
+    ["Sycophant","n.","C1"],["Street","n.","A2"],["Attitude","n.","B1"],["Vociferous","adj.","C1"],["Person","n.","A2"],
+    ["Difficulty","n.","B1"],["Quixotic","adj.","C1"],["Society","n.","B1"],["Soporific","adj.","C1"],["Center","n.","A2"],
+    ["Technology","n.","B1"],["Insipid","adj.","C1"],["Minute","n.","A2"],["Executive","n.","B2"],["Enervate","v.","C1"],
+    ["Second","n.","A2"],["Recalcitrant","adj.","C1"],["Hour","n.","A2"],["Professional","adj.","B1"],["Inchoate","adj.","C1"],["Available","adj.","B1"],
+    ["Obdurate","adj.","C1"],["Morning","n.","A2"],["Material","n.","B1"],["Inimical","adj.","C1"],["Energy","n.","B1"],
+    ["Garrulous","adj.","C1"],["Pencil","n.","A2"],["Disease","n.","B1"],["Imperturbable","adj.","C1"],["Watch","v.","A2"],
+    ["Population","n.","B1"],["Exigent","adj.","C1"],["Learn","v.","A2"],["Management","n.","B1"],["Nonchalant","adj.","C1"],
+    ["Teach","v.","A2"],["Behavior","n.","B1"],["Speak","v.","A2"],["Write","v.","A2"],["Transgress","v.","C1"],
+    ["Listen","v.","A2"],["Read","v.","A2"],["Walk","v.","A2"],["Run","v.","A2"],["Stand","v.","A2"],
+    ["Sit","v.","A2"],["Move","v.","A2"],["Stop","v.","A2"],["Start","v.","A2"],["Open","v.","A2"],
+    ["Close","v.","A2"],["Live","v.","A2"],["Work","v.","A2"],["Play","v.","A2"],["Call","v.","A2"],
+    ["Help","v.","A2"],["Need","v.","A2"],["Want","v.","A2"],["Like","v.","A2"],["Love","v.","A2"],
+    ["Think","v.","A2"],["Know","v.","A2"],["See","v.","A2"],["Look","v.","A2"],["Find","v.","A2"],
+    ["Give","v.","A2"],["Take","v.","A2"],["Come","v.","A2"],["Go","v.","A2"],["Make","v.","A2"],
+    ["Keep","v.","A2"],["Hold","v.","A2"],["Turn","v.","A2"],["Show","v.","A2"],["Feel","v.","A2"],
+    ["Try","v.","A2"],["Ask","v.","A2"],["Leave","v.","A2"],["Put","v.","A2"],["Mean","v.","A2"],
+    ["Let","v.","A2"],["Begin","v.","A2"],["Seem","v.","A2"],["Talk","v.","A2"],["Hear","v.","A2"],
+    ["Bring","v.","A2"],["Happen","v.","A2"],["Lose","v.","A2"],["Pay","v.","A2"],["Meet","v.","A2"],
+    ["Set","v.","A2"],["Lead","v.","A2"],["Understand","v.","A2"],["Add","v.","A2"],["Spend","v.","A2"],
+    ["Grow","v.","A2"],["Win","v.","A2"],["Offer","v.","B1"],["Remember","v.","A2"],["Buy","v.","A2"],
+    ["Wait","v.","A2"],["Serve","v.","B1"],["Die","v.","A2"],["Send","v.","A2"],["Build","v.","A2"],
+    ["Stay","v.","A2"],["Fall","v.","A2"],["Cut","v.","A2"],["Reach","v.","B1"],["Kill","v.","A2"],
+    ["Remain","v.","B1"],["Raise","v.","B1"],["Pass","v.","A2"],["Sell","v.","A2"],["Report","v.","B1"],
+    ["Pull","v.","A2"],["Return","v.","A2"],["Hope","v.","A2"],["Carry","v.","A2"],["Drive","v.","A2"],
+    ["Break","v.","A2"],["Hit","v.","A2"],["Produce","v.","B1"],["Cover","v.","A2"],["Catch","v.","A2"],
+    ["Draw","v.","A2"],["Cause","v.","B1"],["Point","n.","A2"],["High","adj.","A2"],["Low","adj.","A2"],
+    ["Old","adj.","A2"],["Great","adj.","A2"],["Big","adj.","A2"],["Long","adj.","A2"],["Important","adj.","A2"],
+    ["Few","adj.","A2"],["Bad","adj.","A2"],["Same","adj.","A2"],["Able","adj.","A2"],["Late","adj.","A2"],
+    ["Hard","adj.","A2"],["Better","adj.","A2"],["Best","adj.","A2"],["Only","adj.","A2"],["Right","adj.","A2"],
+    ["National","adj.","B1"],["Social","adj.","B1"],["Public","adj.","B1"],["Sure","adj.","A2"],["Clear","adj.","A2"],
+    ["Full","adj.","A2"],["Easy","adj.","A2"],["Real","adj.","A2"],["Close","adj.","A2"],["Free","adj.","A2"]
+  ];
+
+  const vocabDatabase = rawList.map(item => {
+    const word = item[0];
+    const pos = item[1];
+    const level = item[2];
+    const dictInfo = dict[word] || ["ความหมายตามบริบท", "related, similar"];
+    return { word, pos, level, meaning: dictInfo[0], synonym: dictInfo[1] };
+  });
+
+  const WORDS_PER_ROUND = 20;
+  let currentRound = 1;
+  let roundWords = [];
+  let currentQuestionIndex = 0;
+  let score = 0;
+  let currentVocab = null;
+
+  function toggleMenu() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('show');
+  }
+
+  function buildRoundMenu() {
+    const list = document.getElementById('round-list');
+    list.innerHTML = '';
+    const totalRounds = Math.ceil(vocabDatabase.length / WORDS_PER_ROUND);
+    for (let i = 1; i <= totalRounds; i++) {
+      const item = document.createElement('div');
+      item.className = `round-item ${i === currentRound ? 'active' : ''}`;
+      item.innerHTML = `<span>รอบที่ ${i} (${(i-1)*20 + 1}-${Math.min(i*20, vocabDatabase.length)})</span><small style="color:#38bdf8">พร้อม</small>`;
+      item.onclick = () => selectRound(i);
+      list.appendChild(item);
+    }
+  }
+
+  function selectRound(roundNum) {
+    currentRound = roundNum;
+    toggleMenu();
+    startRound();
+  }
+
+  function startRound() {
+    document.getElementById('quiz-view').style.display = 'flex';
+    document.getElementById('summary-view').classList.remove('show');
+    document.getElementById('round-badge').textContent = `รอบที่ ${currentRound}`;
+    
+    const startIndex = (currentRound - 1) * WORDS_PER_ROUND;
+    roundWords = vocabDatabase.slice(startIndex, startIndex + WORDS_PER_ROUND);
+
+    currentQuestionIndex = 0;
+    score = 0;
+    
+    buildRoundMenu();
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    document.getElementById('details-box').classList.remove('show');
+    document.getElementById('next-btn').classList.remove('show');
+    
+    currentVocab = roundWords[currentQuestionIndex];
+
+    document.getElementById('progress-val').textContent = `${currentQuestionIndex + 1}/${roundWords.length}`;
+    document.getElementById('score-val').textContent = score;
+    document.getElementById('target-word').textContent = currentVocab.word;
+    document.getElementById('level-badge').textContent = currentVocab.level;
+
+    const options = generateUniqueOptions(currentVocab);
+    const optionsContainer = document.getElementById('options-grid');
+    optionsContainer.innerHTML = '';
+
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt.text;
+      btn.onclick = () => checkAnswer(btn, opt.isCorrect);
+      optionsContainer.appendChild(btn);
+    });
+  }
+
+  function generateUniqueOptions(correctItem) {
+    let choices = [{ text: correctItem.meaning, isCorrect: true }];
+    let otherMeanings = Array.from(new Set(
+      vocabDatabase
+        .filter(item => item.meaning !== correctItem.meaning)
+        .map(item => item.meaning)
+    ));
+    
+    otherMeanings = shuffleArray(otherMeanings).slice(0, 3);
+    otherMeanings.forEach(meaning => {
+      choices.push({ text: meaning, isCorrect: false });
+    });
+
+    return shuffleArray(choices);
+  }
+
+  function checkAnswer(selectedBtn, isCorrect) {
+    const allBtns = document.querySelectorAll('.option-btn');
+    allBtns.forEach(btn => {
+      btn.classList.add('disabled');
+      if (btn.textContent === currentVocab.meaning) {
+        btn.classList.add('correct');
+      }
+    });
+
+    if (isCorrect) {
+      score++;
+      document.getElementById('score-val').textContent = score;
+    } else {
+      selectedBtn.classList.add('wrong');
+    }
+
+    showDetails();
+
+    const nextBtn = document.getElementById('next-btn');
+    nextBtn.textContent = (currentQuestionIndex + 1 >= roundWords.length) ? 'ดูผลคะแนนประจำรอบ 🏁' : 'ข้อถัดไป ➡️';
+    nextBtn.classList.add('show');
+  }
+
+  function showDetails() {
+    document.getElementById('info-meaning').textContent = currentVocab.meaning;
+    document.getElementById('info-pos').textContent = currentVocab.pos;
+    document.getElementById('info-synonym').textContent = currentVocab.synonym;
+    document.getElementById('details-box').classList.add('show');
+  }
+
+  function nextQuestion() {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < roundWords.length) {
+      loadQuestion();
+    } else {
+      showRoundSummary();
+    }
+  }
+
+  function showRoundSummary() {
+    document.getElementById('quiz-view').style.display = 'none';
+    document.getElementById('final-score').textContent = `${score} / ${roundWords.length}`;
+    document.getElementById('summary-view').classList.add('show');
+  }
+
+  function playNextRound() {
+    const totalRounds = Math.ceil(vocabDatabase.length / WORDS_PER_ROUND);
+    currentRound = (currentRound < totalRounds) ? currentRound + 1 : 1;
+    startRound();
+  }
+
+  function replayCurrentRound() {
+    startRound();
+  }
+
+  function shuffleArray(array) {
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  window.onload = function() {
+    startRound();
+  };
+</script>
+</body>
+</html>
